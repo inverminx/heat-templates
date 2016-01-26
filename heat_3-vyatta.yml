@@ -24,7 +24,7 @@ parameters:
 
   availability_zone:
     type: string
-    default: ProVM-A0
+    default: ProVM-157
     description: Availability zone to deploy images
 
 #--------------PHYSICAL NETWORK---------------  
@@ -55,7 +55,7 @@ parameters:
 #--------------NETWORK--------------- 
   external_network_id:
     type: string
-    default: f71ed701-d402-4b8c-a675-4539487f4b3f
+    default: 1ccfca5d-0b47-4ad9-9294-6cdc7548597b
     description: >
       ID or name of external network for which subnet will be created
 
@@ -118,7 +118,7 @@ parameters:
 #--------------IP_SUBNET---------------  
   mgmt_ip_subnet:
     type: string
-    default: '192.168.15'
+    default: '192.168.18'
     description: IP address/subnet on the managemet network
 
   inner1_ip_subnet:
@@ -164,7 +164,7 @@ parameters:
 
 #--------------VLAN IDs---------------  
   mgmt_network_vlan_id:
-    default: 1100
+    default: 1102
     description: Vlan ID for the mgmt network traffic.
     type: number
 

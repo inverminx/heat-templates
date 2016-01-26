@@ -1,6 +1,18 @@
 #!/bin/bash
 stackName="vyatta-3-stack"
-heat stack-create -f /root/heat/heat_3-vyatta.yml $stackName
+if [[ $1 == "" ]];then
+        openstackConfigFile=openstackConfig.ini
+else
+        openstackConfigFile=$1
+fi
+if [ ! -f "$openstackConfigFile" ];then
+        echo "Configuration file $openstackConfigFile does not exist!"
+        exit 1
+fi
+
+openstackConfig=$(sed ':a;N;$!ba;s/\n/;/g' $openstackConfigFile)
+
+heat stack-create -f heat_3-vyatta.yml -P "$openstackConfig" $stackName
 while [[ "$creationStatus" != "CREATE_COMPLETE" ]]; do
         creationStatus=$(heat stack-list|grep ${stackName}|awk -F\| {'print $4'}|sed -r "s/ //g")
         sleep 2
@@ -55,6 +67,6 @@ echo "Configuring Vyatta3 static route"
 expect expect_configureStaticRoute.sh $vyatta3FloatingIP "$accessCIDR" $vyatta2Inner2IP
 echo "Configuring Vyatta3 static route"
 expect expect_configureStaticRoute.sh $vyatta3FloatingIP "$innerAccessCIDR" $vyatta2Inner2IP
-#send "set protocols static route 22.22.22.0/24 next-hop ${inner2IP}\r"
-echo "Finished"
+echo " #### Finished ####"
+
 

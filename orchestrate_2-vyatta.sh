@@ -1,6 +1,20 @@
 #!/bin/bash
 stackName="vyatta-2-stack"
-heat stack-create -f /root/heat/heat_2-vyatta.yml $stackName
+if [[ $1 == "" ]];then
+        openstackConfigFile=openstackConfig.ini
+else
+        openstackConfigFile=$1
+fi
+if [ ! -f "$openstackConfigFile" ];then
+        echo "Configuration file $openstackConfigFile does not exist!"
+        exit 1
+fi
+
+openstackConfig=$(sed ':a;N;$!ba;s/\n/;/g' $openstackConfigFile)
+
+
+
+heat stack-create -f heat_2-vyatta.yml -P "$openstackConfig" $stackName
 while [[ "$creationStatus" != "CREATE_COMPLETE" ]]; do
 	creationStatus=$(heat stack-list|grep ${stackName}|awk -F\| {'print $4'}|sed -r "s/ //g")
 	sleep 2
@@ -32,3 +46,4 @@ until nc -vzw 2 $vyatta2FloatingIP 22; do sleep 2; done
 
 expect expect_2-vyatta.sh $vyatta1FloatingIP ${vyatta1AccessIP}/24 ${vyatta1NetworkIP}/24 ${vyatta1InnerIP}/24 ${vyatta1InnerIP} $vyatta2FloatingIP ${vyatta2AccessIP}/24 ${vyatta2NetworkIP}/24 ${vyatta2InnerIP}/24 ${vyatta2InnerIP}
 
+echo "Finished!"

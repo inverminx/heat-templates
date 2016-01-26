@@ -1,5 +1,5 @@
 #!/bin/bash
-stackName="vyatta-1-stack"
+stackName="vyatta-1-stack-ecpa"
 if [[ $1 == "" ]];then
         openstackConfigFile=openstackConfig.ini
 else
@@ -11,10 +11,6 @@ if [ ! -f "$openstackConfigFile" ];then
 fi
 
 openstackConfig=$(sed ':a;N;$!ba;s/\n/;/g' $openstackConfigFile)
-
-
-
-
 heat stack-create -f heat_1-vyatta.yml -P "$openstackConfig" $stackName
 while [[ "$creationStatus" != "CREATE_COMPLETE" ]]; do
 	creationStatus=$(heat stack-list|grep ${stackName}|awk -F\| {'print $4'}|sed -r "s/ //g")
@@ -34,8 +30,10 @@ echo "Waiting for Vyatta to be accessible for ssh connection..."
 vyattaFloatingIP=$(heat output-show $stackName vyatta_floating_IP|sed -r 's/\"//g')
 vyattaAccessIP=$(heat output-show $stackName vyatta_access_IP|sed -r 's/\"//g')
 vyattaNetworkIP=$(heat output-show $stackName vyatta_network_IP|sed -r 's/\"//g')
+sourceIP=22.22.22.6
+destMAC=52:54:12:34:56:78
 until nc -vzw 2 $vyattaFloatingIP 22; do sleep 2; done
 
 
-expect expect_1-vyatta.sh $vyattaFloatingIP ${vyattaAccessIP}/24 ${vyattaNetworkIP}/24 
+expect expect_1-vyatta-ecpa.sh $vyattaFloatingIP ${vyattaAccessIP}/24 ${vyattaNetworkIP}/24 $sourceIP $destMAC
 echo "Finished!"

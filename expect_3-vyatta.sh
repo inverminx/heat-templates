@@ -37,13 +37,13 @@ send "commit\r"
 sleep 1
 expect "\[edit\]"
 send "save\r"
-sleep 5
+sleep 2
 expect "\[edit\]"
 send "exit\r"
 sleep 1
 expect "vyatta@vyatta"
 send "exit\r"
-sleep 5
+sleep 2
 
 spawn ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${user}\@${host2}
 expect "password:"
@@ -66,7 +66,7 @@ send "commit\r"
 sleep 1
 expect "\[edit\]"
 send "save\r"
-sleep 5
+sleep 2
 expect "\[edit\]"
 send "exit\r"
 sleep 1

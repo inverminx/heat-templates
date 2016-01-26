@@ -5,6 +5,8 @@ set accessIP [lindex $argv 1]
 set networkIP [lindex $argv 2]
 set accessPortName dp0s4
 set networkPortName dp0s5
+set sourceIP [lindex $argv 3]
+set destMAC [lindex $argv 4]
 
 set user vyatta
 set password vyatta
@@ -40,5 +42,14 @@ expect "\[edit\]"
 send "exit\r"
 sleep 1
 expect "vyatta@vyatta"
+send "su -\r"
+expect "Password:"
+sleep 1
+send "password\r"
+expect "root@vyatta"
+sleep 1
+send "ip neighbor add $sourceIP lladdr $destMAC dev $networkPortName nud permanent\r"
+expect "root@vyatta"
+sleep 1
 send "exit\r"
 sleep 1

@@ -11,10 +11,20 @@ parameters:
     type: string
     default: Vyatta
     description: Name of the instance to create
-  
+
+  server_name_checkpoint:
+    type: string
+    default: Checkpoint
+    description: Name of the instance to create
+
   image:
     type: string
     default: vyatta_BT_demo
+    description: Image name
+
+  image_checkpoint:
+    type: string
+    default: Check_Point_R77.30
     description: Image name
 
   flavor:
@@ -22,12 +32,20 @@ parameters:
     default: demo.r4_d20_c4
     description: Flavor Name
 
+  flavor_checkpoint:
+    type: string
+    default: demo.checkpoint
+    description: Flavor Name
+
   availability_zone:
     type: string
     default: ProVM-157
     description: Availability zone to deploy images
 
-
+  checkpoint_key_name:
+    type: string
+    default: checkpoint
+    description: Name of the key to create
 #--------------PHYSICAL NETWORK---------------  
   physical_mgmt_network:
     type: string
@@ -127,24 +145,29 @@ parameters:
     description: IP address/subnet on the external network
 
 #--------------INTERFACE_MAC---------------  
-  mgmt_interface_mac_1:
+  interface_mac_1:
     type: string
     default: '52:54:00:a5:00:00'
     description: MAC address of the managemet interface
 
-  mgmt_interface_mac_2:
+  interface_mac_2:
     type: string
     default: '52:54:00:a5:00:01'
     description: MAC address of the managemet interface
 
-  mgmt_interface_mac_3:
+  interface_mac_3:
     type: string
     default: '52:54:00:a5:00:02'
     description: MAC address of the managemet interface
 
-  mgmt_interface_mac_4:
+  interface_mac_4:
     type: string
     default: '52:54:00:a5:00:04'
+    description: MAC address of the managemet interface
+
+  interface_mac_5:
+    type: string
+    default: '52:54:00:a5:00:05'
     description: MAC address of the managemet interface
 
 #--------------VLAN IDs---------------  
@@ -179,6 +202,13 @@ resources:
         - port_range_min: 1
           port_range_max: 65535
           protocol: tcp
+
+#----------OS::Nova::KeyPair----------
+  key_pairs:
+    type: OS::Nova::KeyPair
+    properties:
+      name: { get_param: checkpoint_key_name }
+      save_private_key: true
 
 #----------OS::Neutron::ProviderNet----------
 
@@ -334,7 +364,7 @@ resources:
         - subnet_id: { get_resource: management_subnet }
       security_groups:
         - get_resource: secgroup_common
-      mac_address: { get_param: mgmt_interface_mac_1 }
+      mac_address: { get_param: interface_mac_1 }
 
   mgmt_network_port_2:
     type: OS::Neutron::Port
@@ -344,9 +374,9 @@ resources:
         - subnet_id: { get_resource: management_subnet }
       security_groups:
         - get_resource: secgroup_common
-      mac_address: { get_param: mgmt_interface_mac_2 }
+      mac_address: { get_param: interface_mac_2 }
 
-  access_network_port_1:
+  access_network_port:
     type: OS::Neutron::Port
     properties:
       network_id: { get_resource: access_net }
@@ -354,19 +384,9 @@ resources:
         - subnet_id: { get_resource: acc3_subnet }
       security_groups:
         - get_resource: secgroup_common
-#      mac_address: { get_param: access_interface_mac }            
+      mac_address: { get_param: interface_mac_3 }
 
-  access_network_port_2:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_resource: access_net }
-      fixed_ips:
-        - subnet_id: { get_resource: acc3_subnet }
-      security_groups:
-        - get_resource: secgroup_common
-#      mac_address: { get_param: access_interface_mac }            
-
-  net2_network_port_1:
+  net2_network_port:
     type: OS::Neutron::Port
     properties:
       network_id: { get_resource: net2_net }
@@ -374,17 +394,7 @@ resources:
         - subnet_id: { get_resource: net2_subnet }
       security_groups:
         - get_resource: secgroup_common
-#      mac_address: { get_param: access_interface_mac }            
-
-  net2_network_port_2:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_resource: net2_net }
-      fixed_ips:
-        - subnet_id: { get_resource: net2_subnet }
-      security_groups:
-        - get_resource: secgroup_common
-#      mac_address: { get_param: access_interface_mac }            
+      mac_address: { get_param: interface_mac_4 }            
 
 #----------OS::Neutron::Router----------
   router_mng:
@@ -414,8 +424,8 @@ resources:
       availability_zone: { get_param: availability_zone }
       networks:
         - port: { get_resource: mgmt_network_port_1}
+        - port: { get_resource: net2_network_port}
         - port: { get_resource: inner_network_port_1}
-        - port: { get_resource: access_network_port_1}
 
   server2:
     type: OS::Nova::Server
@@ -423,15 +433,16 @@ resources:
       name:
         list_join:
            - '_'
-           - - {get_param: server_name}
-             - '2'
-      image: { get_param: image }
-      flavor: { get_param: flavor }
+           - - {get_param: server_name_checkpoint}
+             - '1'
+      image: { get_param: image_checkpoint }
+      flavor: { get_param: flavor_checkpoint }
+      key_name: { get_resource: key_pairs }
       availability_zone: { get_param: availability_zone }
       networks:
         - port: { get_resource: mgmt_network_port_2}
         - port: { get_resource: inner_network_port_2}
-        - port: { get_resource: net2_network_port_2}
+        - port: { get_resource: access_network_port}
 
 #----------OS::Neutron::FloatingIP----------
   server1_floating_ip:
@@ -452,34 +463,36 @@ resources:
 
 #----------Outputs----------
 outputs:
-  vyatta1_floating_IP:
-    description: Floating IP address of Vyatta1 in public network
+  vyatta_floating_IP:
+    description: Floating IP address of Vyatta in public network
     value: { get_attr: [ server1_floating_ip, floating_ip_address ] }
-  vyatta1_mgmt_IP:
-    description: Vyatta1 Mgmt port IP
+  vyatta_mgmt_IP:
+    description: Vyatta Mgmt port IP
     value: { get_attr: [mgmt_network_port_1,fixed_ips,0,ip_address]}
-  vyatta1_access_IP:
-    description: Vyatta1 Access port IP
-    value: { get_attr: [access_network_port_1,fixed_ips,0,ip_address]}
-  vyatta1_network_IP:
-    description: Vyatta1 Network port IP
-    value: { get_attr: [net2_network_port_1,fixed_ips,0,ip_address]}
-  vyatta1_inner_IP:
-    description: Vyatta1 Inner port IP
+  vyatta_network_IP:
+    description: Vyatta Network port IP
+    value: { get_attr: [net2_network_port,fixed_ips,0,ip_address]}
+  vyatta_inner_IP:
+    description: Vyatta Inner port IP
     value: { get_attr: [inner_network_port_1,fixed_ips,0,ip_address]}
-  vyatta2_floating_IP:
-    description: Floating IP address of Vyatta2 in public network
+  checkpoint_floating_IP:
+    description: Floating IP address of checkpoint in public network
     value: { get_attr: [ server2_floating_ip, floating_ip_address ] }
-  vyatta2_mgmt_IP:
-    description: Vyatta2 Mgmt port IP
+  checkpoint_mgmt_IP:
+    description: checkpoint Mgmt port IP
     value: { get_attr: [mgmt_network_port_2,fixed_ips,0,ip_address]}
-  vyatta2_access_IP:
-    description: Vyatta2 Access port IP
-    value: { get_attr: [access_network_port_2,fixed_ips,0,ip_address]}
-  vyatta2_network_IP:
-    description: Vyatta2 Network port IP
-    value: { get_attr: [net2_network_port_2,fixed_ips,0,ip_address]}
-  vyatta2_inner_IP:
-    description: Vyatta2 Inner port IP
+  checkpoint_access_IP:
+    description: checkpoint Access port IP
+    value: { get_attr: [access_network_port,fixed_ips,0,ip_address]}
+  checkpoint_inner_IP:
+    description: checkpoint Inner port IP
     value: { get_attr: [inner_network_port_2,fixed_ips,0,ip_address]}
-
+  checkpoint_Private_Key:
+    description: Private key to use for SSH connection to checkpoint
+    value: { get_attr: [key_pairs,private_key]}
+  access_Port_Mac_Address:
+    description: Access port MAC address
+    value: { get_attr: [access_network_port,mac_address]}
+  network_Port_Mac_Address:
+    description: Network port MAC address
+    value: { get_attr: [net2_network_port,mac_address]}

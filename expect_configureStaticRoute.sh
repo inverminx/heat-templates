@@ -15,16 +15,16 @@ send "configure\r"
 sleep 1
 expect "\[edit\]"
 send "set protocols static route $cidr next-hop $nextHop\r"
-sleep 5
+sleep 2
 expect "\[edit\]"
 send "commit\r"
-sleep 5
+sleep 2
 expect "\[edit\]"
 send "save\r"
-sleep 5
+sleep 2
 expect "\[edit\]"
 send "exit\r"
 sleep 1
 expect "vyatta@vyatta"
 send "exit\r"
-sleep 5
+sleep 2

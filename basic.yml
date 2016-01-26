@@ -1,0 +1,23 @@
+heat_template_version: 2014-10-16
+
+
+
+description: Simple template to deploy a single compute instance
+
+
+parameters:
+  networkName:
+    type: string
+    default: net04
+    description: The mgmt network name
+
+
+resources:
+  my_instance:
+    type: OS::Nova::Server
+    properties:
+      key_name: uri
+      image: TestVM
+      flavor: m1.small
+      networks:
+        - network: { get_param: networkName }

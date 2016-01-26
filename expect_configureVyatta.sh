@@ -30,10 +30,10 @@ send "commit\r"
 sleep 1
 expect "\[edit\]"
 send "save\r"
-sleep 5
+sleep 2
 expect "\[edit\]"
 send "exit\r"
 sleep 1
 expect "vyatta@vyatta"
 send "exit\r"
-sleep 5
+sleep 2
