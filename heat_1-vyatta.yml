@@ -9,17 +9,14 @@ description: >
 parameters:
   server_name:
     type: string
-    default: Vyatta
     description: Name of the instance to create
   
   image:
     type: string
-    default: vyatta_BT_demo
     description: Image name
 
   flavor:
     type: string
-    default: demo.r4_d20_c4
     description: Flavor Name
 
   availability_zone:
@@ -30,19 +27,16 @@ parameters:
 #--------------PHYSICAL NETWORK---------------  
   physical_mgmt_network:
     type: string
-    default: nid-net1
     description: >
       ID or name of physical network for management network
 
   physical_acc3_network:
     type: string
-    default: nid-acc3
     description: >
       ID or name of physical network for access network
 
   physical_net2_network:
     type: string
-    default: nid-net2
     description: >
       ID or name of physical network for access network
 
@@ -54,83 +48,68 @@ parameters:
 
   mgmt_network_name:
     type: string
-    default: net-mng
     description: >
       ID or name of management network
 
   acc3_network_name:
     type: string
-    default: net-acc3
     description: >
       ID or name of access network
 
   net2_network_name:
     type: string
-    default: net-net2
     description: >
       ID or name of access network
 
 #--------------SUBNET---------------  
   mgmt_subnet_name:
     type: string
-    default: sub-mng
     description: Subnet name on the management network
 
   acc3_subnet_name:
     type: string
-    default: sub-acc3
     description: Subnet name on the access network
 
   net2_subnet_name:
     type: string
-    default: sub-net2
     description: Subnet name on the external network
 
 #--------------IP_SUBNET---------------  
   mgmt_ip_subnet:
     type: string
-    default: '192.168.18'
     description: IP address/subnet on the managemet network
 
   acc3_ip_subnet:
     type: string
-    default: '33.33.33'
     description: IP address/subnet on the access network
 
   net2_ip_subnet:
     type: string
-    default: '22.22.22'
     description: IP address/subnet on the external network
 
 #--------------INTERFACE_MAC---------------  
   mgmt_interface_mac:
     type: string
-    default: '52:54:00:a5:00:00'
     description: MAC address of the managemet interface
 
   acc_interface_mac:
     type: string
-    default: '52:54:12:34:56:78'
     description: MAC address of the managemet interface
 
   net_interface_mac:
     type: string
-    default: '52:54:12:34:56:79'
     description: MAC address of the managemet interface
 
 #--------------VLAN IDs---------------  
   mgmt_network_vlan_id:
-    default: 1102
     description: Vlan ID for the mgmt network traffic.
     type: number
 
   acc3_network_vlan_id:
-    default: 1300
     description: Vlan ID for the access network traffic.
     type: number
 
   net2_network_vlan_id:
-    default: 1200
     description: Vlan ID for the external network traffic.
     type: number
 

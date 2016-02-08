@@ -1,0 +1,3 @@
+availability_zone=ProVM-158
+external_network_id=b23e317c-74b0-4bdb-a6b7-10f0a7751080
+mgmt_network_vlan_id=1104
