@@ -1,0 +1,498 @@
+heat_template_version: 2013-05-23
+
+description: >
+  HOT template to create three new neutron networks plus a router to the public
+  network, and for deploying one server into the new network. The template also
+  assigns floating IP addresses to server so is is routable from the
+  public network.
+
+parameters:
+  server_name:
+    type: string
+    default: Vyatta
+    description: Name of the instance to create
+
+  server_name_checkpoint:
+    type: string
+    default: Checkpoint
+    description: Name of the instance to create
+
+  image:
+    type: string
+    default: vyatta_BT_demo
+    description: Image name
+
+  image_checkpoint:
+    type: string
+    default: Check_Point_R77.30
+    description: Image name
+
+  flavor:
+    type: string
+    default: demo.r4_d20_c4
+    description: Flavor Name
+
+  flavor_checkpoint:
+    type: string
+    default: demo.checkpoint
+    description: Flavor Name
+
+  availability_zone:
+    type: string
+    default: ProVM-157
+    description: Availability zone to deploy images
+
+  checkpoint_key_name:
+    type: string
+    default: checkpoint
+    description: Name of the key to create
+#--------------PHYSICAL NETWORK---------------  
+  physical_mgmt_network:
+    type: string
+    default: nid-net1
+    description: >
+      ID or name of physical network for management network
+
+  physical_inner_network:
+    type: string
+    default: phy-local
+    description: >
+      ID or name of physical network for inner network
+
+  physical_acc3_network:
+    type: string
+    default: nid-acc3
+    description: >
+      ID or name of physical network for access network
+
+  physical_net2_network:
+    type: string
+    default: nid-net2
+    description: >
+      ID or name of physical network for access network
+
+#--------------NETWORK--------------- 
+  external_network_id:
+    type: string
+    default: 1ccfca5d-0b47-4ad9-9294-6cdc7548597b
+    description: >
+      ID or name of external network for which subnet will be created
+
+  mgmt_network_name:
+    type: string
+    default: net-mng
+    description: >
+      ID or name of management network
+
+  inner_network_1_name:
+    type: string
+    default: net1-inner-chain
+    description: >
+      ID or name of inner network
+
+  acc3_network_name:
+    type: string
+    default: net-acc3
+    description: >
+      ID or name of access network
+
+  net2_network_name:
+    type: string
+    default: net-net2
+    description: >
+      ID or name of access network
+
+#--------------SUBNET---------------  
+  mgmt_subnet_name:
+    type: string
+    default: sub-mng
+    description: Subnet name on the management network
+
+  inner_subnet1_name:
+    type: string
+    default: sub-inner1-chain
+    description: Subnet name on the inner network
+
+  acc3_subnet_name:
+    type: string
+    default: sub-acc3
+    description: Subnet name on the access network
+
+  net2_subnet_name:
+    type: string
+    default: sub-net2
+    description: Subnet name on the external network
+
+#--------------IP_SUBNET---------------  
+  mgmt_ip_subnet:
+    type: string
+    default: '192.168.18'
+    description: IP address/subnet on the managemet network
+
+  inner1_ip_subnet:
+    type: string
+    default: '88.88.88'
+    description: IP address/subnet on the inner network
+
+  acc3_ip_subnet:
+    type: string
+    default: '33.33.33'
+    description: IP address/subnet on the access network
+
+  net2_ip_subnet:
+    type: string
+    default: '22.22.22'
+    description: IP address/subnet on the external network
+
+#--------------INTERFACE_MAC---------------  
+  interface_mac_1:
+    type: string
+    default: '52:54:00:a5:00:00'
+    description: MAC address of the managemet interface
+
+  interface_mac_2:
+    type: string
+    default: '52:54:00:a5:00:01'
+    description: MAC address of the managemet interface
+
+  interface_mac_3:
+    type: string
+    default: '52:54:00:a5:00:02'
+    description: MAC address of the managemet interface
+
+  interface_mac_4:
+    type: string
+    default: '52:54:00:a5:00:04'
+    description: MAC address of the managemet interface
+
+  interface_mac_5:
+    type: string
+    default: '52:54:00:a5:00:05'
+    description: MAC address of the managemet interface
+
+#--------------VLAN IDs---------------  
+  mgmt_network_vlan_id:
+    default: 1102
+    description: Vlan ID for the mgmt network traffic.
+    type: number
+
+  inner_network1_vlan_id:
+    default: 1800
+    description: Vlan ID for the private network traffic.
+    type: number
+
+  acc3_network_vlan_id:
+    default: 1300
+    description: Vlan ID for the access network traffic.
+    type: number
+
+  net2_network_vlan_id:
+    default: 1200
+    description: Vlan ID for the external network traffic.
+    type: number
+
+
+resources:
+#----------OS::Neutron::SecurityGroup----------
+  secgroup_common:
+    type: "OS::Neutron::SecurityGroup"
+    properties:
+      rules:
+        - protocol: icmp
+        - port_range_min: 1
+          port_range_max: 65535
+          protocol: tcp
+
+#----------OS::Nova::KeyPair----------
+  key_pairs:
+    type: OS::Nova::KeyPair
+    properties:
+      name: { get_param: checkpoint_key_name }
+      save_private_key: true
+
+#----------OS::Neutron::ProviderNet----------
+
+  management_net:
+    type: OS::Neutron::ProviderNet
+    properties:
+      name: { get_param: mgmt_network_name }
+      physical_network: { get_param: physical_mgmt_network }
+      network_type: vlan
+      segmentation_id: { get_param: mgmt_network_vlan_id }
+
+  inner_net_1:
+    type: OS::Neutron::ProviderNet
+    properties:
+      name: { get_param: inner_network_1_name }
+      physical_network: { get_param: physical_inner_network }
+      network_type: vlan
+      segmentation_id: { get_param: inner_network1_vlan_id }
+
+  access_net:
+    type: OS::Neutron::ProviderNet
+    properties:
+      name: { get_param: acc3_network_name }
+      physical_network: { get_param: physical_acc3_network }
+      network_type: vlan
+      segmentation_id: { get_param: acc3_network_vlan_id }
+
+  net2_net:
+    type: OS::Neutron::ProviderNet
+    properties:
+      name: { get_param: net2_network_name }
+      physical_network: { get_param: physical_net2_network }
+      network_type: vlan
+      segmentation_id: { get_param: net2_network_vlan_id }
+
+#----------OS::Neutron::Subnet----------
+
+  management_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: management_net }
+      gateway_ip:
+        list_join:
+           - '.'
+           - - {get_param: mgmt_ip_subnet}
+             - '129'
+      cidr:
+        list_join:
+           - '.'
+           - - {get_param: mgmt_ip_subnet}
+             - '128/25'
+      allocation_pools:
+        - start:
+            list_join:
+               - '.'
+               - - {get_param: mgmt_ip_subnet}
+                 - '130'
+          end:
+            list_join:
+               - '.'
+               - - {get_param: mgmt_ip_subnet}
+                 - '254'
+
+  inner1_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: inner_net_1 }
+      cidr:
+        list_join:
+           - '.'
+           - - {get_param: inner1_ip_subnet}
+             - '0/24'
+      allocation_pools:
+          - start:
+              list_join:
+                 - '.'
+                 - - {get_param: inner1_ip_subnet}
+                   - '2'
+            end:
+              list_join:
+                 - '.'
+                 - - {get_param: inner1_ip_subnet}
+                   - '5'
+
+  acc3_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: access_net }
+      cidr:
+        list_join:
+           - '.'
+           - - {get_param: acc3_ip_subnet}
+             - '0/24'
+      allocation_pools:
+        - start:
+            list_join:
+               - '.'
+               - - {get_param: acc3_ip_subnet}
+                 - '2'
+          end:
+            list_join:
+               - '.'
+               - - {get_param: acc3_ip_subnet}
+                 - '5'
+
+  net2_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: net2_net }
+      cidr:
+        list_join:
+           - '.'
+           - - {get_param: net2_ip_subnet}
+             - '0/24'
+      allocation_pools:
+        - start:
+            list_join:
+               - '.'
+               - - {get_param: net2_ip_subnet}
+                 - '2'
+          end:
+            list_join:
+               - '.'
+               - - {get_param: net2_ip_subnet}
+                 - '5'
+
+#----------OS::Neutron::Port----------
+  inner_network_port_1:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: inner_net_1 }
+      fixed_ips:
+        - subnet_id: { get_resource: inner1_subnet }
+      security_groups:
+        - get_resource: secgroup_common
+      allowed_address_pairs: [{"ip_address": 0.0.0.0/1}]
+
+  inner_network_port_2:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: inner_net_1 }
+      fixed_ips:
+        - subnet_id: { get_resource: inner1_subnet }
+      security_groups:
+        - get_resource: secgroup_common
+      allowed_address_pairs: [{"ip_address": 0.0.0.0/1}]
+
+  mgmt_network_port_1:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: management_net }
+      fixed_ips:
+        - subnet_id: { get_resource: management_subnet }
+      security_groups:
+        - get_resource: secgroup_common
+      mac_address: { get_param: interface_mac_1 }
+
+  mgmt_network_port_2:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: management_net }
+      fixed_ips:
+        - subnet_id: { get_resource: management_subnet }
+      security_groups:
+        - get_resource: secgroup_common
+      mac_address: { get_param: interface_mac_2 }
+
+  access_network_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: access_net }
+      fixed_ips:
+        - subnet_id: { get_resource: acc3_subnet }
+      security_groups:
+        - get_resource: secgroup_common
+      mac_address: { get_param: interface_mac_3 }
+
+  net2_network_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: net2_net }
+      fixed_ips:
+        - subnet_id: { get_resource: net2_subnet }
+      security_groups:
+        - get_resource: secgroup_common
+      mac_address: { get_param: interface_mac_4 }            
+
+#----------OS::Neutron::Router----------
+  router_mng:
+    type: OS::Neutron::Router
+    properties:
+      external_gateway_info:
+        network: { get_param: external_network_id }
+
+#----------OS::Neutron::RouterInterface----------
+  router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: router_mng }
+      subnet_id: { get_resource: management_subnet }
+
+#----------OS::Nova::Server----------
+  server1:
+    type: OS::Nova::Server
+    properties:
+      name:
+        list_join:
+           - '_'
+           - - {get_param: server_name}
+             - '1'
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      availability_zone: { get_param: availability_zone }
+      networks:
+        - port: { get_resource: mgmt_network_port_1}
+        - port: { get_resource: net2_network_port}
+        - port: { get_resource: inner_network_port_1}
+
+  server2:
+    type: OS::Nova::Server
+    properties:
+      name:
+        list_join:
+           - '_'
+           - - {get_param: server_name_checkpoint}
+             - '1'
+      image: { get_param: image_checkpoint }
+      flavor: { get_param: flavor_checkpoint }
+      key_name: { get_resource: key_pairs }
+      availability_zone: { get_param: availability_zone }
+      networks:
+        - port: { get_resource: mgmt_network_port_2}
+        - port: { get_resource: inner_network_port_2}
+        - port: { get_resource: access_network_port}
+
+#----------OS::Neutron::FloatingIP----------
+  server1_floating_ip:
+    depends_on:
+      - router_interface
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: { get_param: external_network_id }
+      port_id: { get_resource: mgmt_network_port_1 }
+
+  server2_floating_ip:
+    depends_on:
+      - router_interface
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: { get_param: external_network_id }
+      port_id: { get_resource: mgmt_network_port_2 }
+
+#----------Outputs----------
+outputs:
+  vyatta_floating_IP:
+    description: Floating IP address of Vyatta in public network
+    value: { get_attr: [ server1_floating_ip, floating_ip_address ] }
+  vyatta_mgmt_IP:
+    description: Vyatta Mgmt port IP
+    value: { get_attr: [mgmt_network_port_1,fixed_ips,0,ip_address]}
+  vyatta_network_IP:
+    description: Vyatta Network port IP
+    value: { get_attr: [net2_network_port,fixed_ips,0,ip_address]}
+  vyatta_inner_IP:
+    description: Vyatta Inner port IP
+    value: { get_attr: [inner_network_port_1,fixed_ips,0,ip_address]}
+  checkpoint_floating_IP:
+    description: Floating IP address of checkpoint in public network
+    value: { get_attr: [ server2_floating_ip, floating_ip_address ] }
+  checkpoint_mgmt_IP:
+    description: checkpoint Mgmt port IP
+    value: { get_attr: [mgmt_network_port_2,fixed_ips,0,ip_address]}
+  checkpoint_access_IP:
+    description: checkpoint Access port IP
+    value: { get_attr: [access_network_port,fixed_ips,0,ip_address]}
+  checkpoint_inner_IP:
+    description: checkpoint Inner port IP
+    value: { get_attr: [inner_network_port_2,fixed_ips,0,ip_address]}
+  checkpoint_Private_Key:
+    description: Private key to use for SSH connection to checkpoint
+    value: { get_attr: [key_pairs,private_key]}
+  access_Port_Mac_Address:
+    description: Access port MAC address
+    value: { get_attr: [access_network_port,mac_address]}
+  network_Port_Mac_Address:
+    description: Network port MAC address
+    value: { get_attr: [net2_network_port,mac_address]}

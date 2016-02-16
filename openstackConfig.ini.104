@@ -1,3 +1,4 @@
+availability_zone=ProVM-104
 external_network_id=b23e317c-74b0-4bdb-a6b7-10f0a7751080
 image=vyatta_BT_demo
 flavor=demo.r4_d20_c4
@@ -20,4 +21,3 @@ net_interface_mac=52:54:12:34:56:79
 mgmt_network_vlan_id=1103
 net2_network_vlan_id=1203
 acc3_network_vlan_id=1303
-physical_inner_network=phy-local
