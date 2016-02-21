@@ -1,0 +1,221 @@
+heat_template_version: 2013-05-23
+
+description: >
+  HOT template to create three new neutron networks plus a router to the public
+  network, and for deploying one server into the new network. The template also
+  assigns floating IP addresses to server so is is routable from the
+  public network.
+
+parameters:
+  server_name:
+    type: string
+    description: Name of the instance to create
+  
+  image:
+    type: string
+    description: Image name
+
+  flavor:
+    type: string
+    description: Flavor Name
+
+  availability_zone:
+    type: string
+    description: Availability zone to deploy images
+
+#--------------PHYSICAL NETWORK---------------  
+  physical_mgmt_network:
+    type: string
+    description: >
+      ID or name of physical network for management network
+
+  physical_inner_network:
+    type: string
+    description: >
+      ID or name of physical network for inner network
+
+  physical_acc3_network:
+    type: string
+    description: >
+      ID or name of physical network for access network
+
+  physical_net2_network:
+    type: string
+    description: >
+      ID or name of physical network for access network
+
+#--------------NETWORK--------------- 
+  external_network_id:
+    type: string
+    description: >
+      ID or name of external network for which subnet will be created
+
+  mgmt_network_name:
+    type: string
+    description: >
+      ID or name of management network
+
+  inner_network_1_name:
+    type: string
+    default: net1-inner-chain
+    description: >
+      ID or name of inner network
+
+  inner_network_2_name:
+    type: string
+    default: net2-inner-chain
+    description: >
+      ID or name of inner network
+
+  acc3_network_name:
+    type: string
+    description: >
+      ID or name of access network
+
+  net2_network_name:
+    type: string
+    description: >
+      ID or name of access network
+
+#--------------SUBNET---------------  
+  mgmt_subnet_name:
+    type: string
+    description: Subnet name on the management network
+
+  inner_subnet1_name:
+    type: string
+    default: sub-inner1-chain
+    description: Subnet name on the inner network
+
+  inner_subnet2_name:
+    type: string
+    default: sub-inner2-chain
+    description: Subnet name on the inner network
+
+  acc3_subnet_name:
+    type: string
+    description: Subnet name on the access network
+
+  net2_subnet_name:
+    type: string
+    description: Subnet name on the external network
+
+#--------------IP_SUBNET---------------  
+  mgmt_ip_subnet:
+    type: string
+    description: IP address/subnet on the managemet network
+
+  inner1_ip_subnet:
+    type: string
+    default: '80.80.80'
+    description: IP address/subnet on the inner network
+
+  inner2_ip_subnet:
+    type: string
+    default: '81.81.81'
+    description: IP address/subnet on the inner network
+
+  acc3_ip_subnet:
+    type: string
+    description: IP address/subnet on the access network
+
+  net2_ip_subnet:
+    type: string
+    description: IP address/subnet on the external network
+
+#--------------INTERFACE_MAC---------------  
+  mgmt_interface_mac_1:
+    type: string
+    default: '52:54:00:a5:00:00'
+    description: MAC address of the managemet interface
+
+  mgmt_interface_mac_2:
+    type: string
+    default: '52:54:00:a5:00:01'
+    description: MAC address of the managemet interface
+
+  mgmt_interface_mac_3:
+    type: string
+    default: '52:54:00:a5:00:02'
+    description: MAC address of the managemet interface
+
+  mgmt_interface_mac_4:
+    type: string
+    default: '52:54:00:a5:00:04'
+    description: MAC address of the managemet interface
+
+#--------------VLAN IDs---------------  
+  mgmt_network_vlan_id:
+    description: Vlan ID for the mgmt network traffic.
+    type: number
+
+  inner_network1_vlan_id:
+    default: 1800
+    description: Vlan ID for the private network traffic.
+    type: number
+
+  inner_network2_vlan_id:
+    default: 1801
+    description: Vlan ID for the private network traffic.
+    type: number
+
+  acc3_network_vlan_id:
+    description: Vlan ID for the access network traffic.
+    type: number
+
+  net2_network_vlan_id:
+    description: Vlan ID for the external network traffic.
+    type: number
+
+
+#
+#----------EXTRA-Args--------------------------
+  mgmt_interface_mac:
+    type: string
+    default: xxx
+    description: MAC address of the managemet interface
+
+  net_interface_mac:
+    type: string
+    default: xxx
+    description: MAC address of the managemet interface
+
+  acc_interface_mac:
+    type: string
+    default: xxx
+    description: MAC address of the managemet interface
+
+resources:
+#----------OS::Neutron::SecurityGroup----------
+#----------OS::Neutron::ProviderNet----------
+#----------OS::Neutron::Subnet----------
+#----------OS::Neutron::Port----------
+#----------OS::Neutron::Router----------
+#----------OS::Neutron::RouterInterface----------
+#----------OS::Nova::Server----------
+  server1:
+    type: OS::Nova::Server
+    properties:
+      name:
+        list_join:
+           - '_'
+           - - {get_param: server_name}
+             - '1'
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      availability_zone: { get_param: availability_zone }
+      networks:
+        - port: networkInfra-mgmt_network_port_1-sgq5jhtdz7nt
+        - port: networkInfra-net2_network_port-kc7tfqc3i3tq
+        - port: networkInfra-access_network_port-6tockwomp5ly
+
+#----------OS::Neutron::FloatingIP----------
+  server1_floating_ip:
+    depends_on:
+      - router_interface
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: { get_param: external_network_id }
+      port_id: 1d04c691-6796-4c9a-9efc-ae0b1a85b258
+
+#----------Outputs----------
