@@ -1,5 +1,5 @@
 #!/bin/bash
-
+source /root/openrc
 function yesNo {
 while true; do
     read -p "Do you wish to install this program?" yn
@@ -149,6 +149,7 @@ echo "Finished!"
 
 
 function selector {
+
 i=0
 list=$1
 for line in $1; do
@@ -210,13 +211,42 @@ if [[ "$?" != "0" ]];then
 fi
 
 }
+mode=interactive
+
+if [ "$#" -eq 2 ]; then
+    echo "mode=auto"
+	mode=auto
+	auto_computeNode=$1
+	auto_scenario=$2
+fi
+if [ "$#" -ne 2 ] && [ "$#" -gt 0 ]; then
+colorRed "Usage: $0  - Interactive mode"
+colorGreen	 " or"
+colorRed	"$0 [ProVM number] [scenario]"
+colorGreen	"Chose Scenario:"
+echo " 1. vyatta"
+echo " 2. vyatta-vyatta"
+echo " 3. vyatta-vyatta-vyatta"
+echo " 4. vyatta-checkpoint"
+echo " 5. ecpa-yatta"
+echo
+colorBold "For example $0 150 2"
+
+colorReset
+exit 1
+fi
 
 clear
 colorBold "Adva Orchestrator\n"
 colorReset "Select target node:"
 nodes=$(getComputeNodes)
 colorGreen
-selector "$nodes"
+
+if [[ "$mode" == "auto" ]]; then 
+	selectorResult=$auto_computeNode
+else
+	selector "$nodes"
+fi
 getNodeStatus $selectorResult
 if [[ "$nodeStatus" != "up" ]]; then
 	colorRed "Node $selectorResult state is $nodeStatus"
@@ -234,9 +264,14 @@ fi
 colorReset "Select service chain"
 colorGreen
 
-selector "vyatta vyatta-vyatta vyatta-vyatta-vyatta vyatta-checkpoint ecpa-vyatta"
+if [[ "$mode" == "auto" ]]; then 
+	selectorResult=$auto_scenario
+else
+	selector "vyatta vyatta-vyatta vyatta-vyatta-vyatta vyatta-checkpoint ecpa-vyatta"
+fi
 useCase=$selectorResult
 availabilityZonesList=$(getAvailabilityZones)
+
 
 if [[ $availabilityZonesList != *"$node"* ]]
 then
