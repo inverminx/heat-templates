@@ -15,8 +15,8 @@ function deployVNF {
 colorReset
 useCase=$1
 az=$2
-rand=$(cat /dev/urandom | tr -dc '0-9' | fold -w 6 | head -n 1)
-stackName="$useCase-$rand"
+#rand=$(cat /dev/urandom | tr -dc '0-9' | fold -w 6 | head -n 1)
+stackName="$useCase-$az"
 configFile=${node}.ini
 defaultConfigFile=openstackConfig.ini
 
@@ -135,7 +135,7 @@ ecpa-vyatta)
 	vyattaAccessIP=$(heat output-show $stackName vyatta_access_IP|sed -r 's/\"//g')
 	vyattaNetworkIP=$(heat output-show $stackName vyatta_network_IP|sed -r 's/\"//g')
 	sourceIP=22.22.22.6
-	destMAC=52:54:12:34:56:78
+	destMAC=52:53:12:34:56:78
 	until nc -vzw 2 $vyattaFloatingIP 22; do sleep 2; done
 	expect expect_$useCase.sh $vyattaFloatingIP ${vyattaAccessIP}/24 ${vyattaNetworkIP}/24 $sourceIP $destMAC   ;;
 *)
@@ -288,8 +288,8 @@ deployVNF $useCase $node
 
 exit 0
 
-rand=$(cat /dev/urandom | tr -dc '0-9' | fold -w 6 | head -n 1)
-stackName="vyatta-1-stack-$rand"
+#rand=$(cat /dev/urandom | tr -dc '0-9' | fold -w 6 | head -n 1)
+stackName="vyatta-1-stack-$az"
 if [[ $1 == "" ]];then
         openstackConfigFile=openstackConfig.ini
 else
